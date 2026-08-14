@@ -49,6 +49,8 @@ const WEIGHT_INCREMENT : float = 1.0
 
 
 ## Training data.
+## Got from 1000randomnames.com and asked ChatGPT to filter duplicates.
+## I didn't check if ChatGPT really did though, so my bad.
 var names : Array[String] = [
 	"Parker", "Zaid", "Teagan", "Harry", "Laylani", "Julius", "Talia", "Forrest", "Holly", "Jeffery",
 	"Bellamy", "Mordechai", "Madelynn", "Jaxx", "Skylar", "Jair", "Jazlyn", "Dawson", "Yaretzi", "Benjamin",
@@ -262,7 +264,7 @@ func _new_name() -> String:
 			break
 
 		# Pull next_letter according to name_key's list of possible next letters.
-		var next_letter : String = get_next_letter(name_key)
+		var next_letter : String = _get_next_letter(name_key)
 
 		# Pulled NULL_TOKEN? Don't worry, we have fallbacks!
 		if next_letter == NULL_TOKEN:
@@ -274,7 +276,7 @@ func _new_name() -> String:
 			# Keep pulling new letters until it's not NULL_TOKEN.
 			else:
 				while next_letter == NULL_TOKEN:
-					next_letter = get_next_letter(name_key)
+					next_letter = _get_next_letter(name_key)
 
 		# Add next_letter to name.
 		generated_name += next_letter
@@ -293,7 +295,7 @@ func _new_name() -> String:
 
 ## Pulls a random next letter according to its weights
 ## from name_key's possible next letters.
-func get_next_letter(name_key : String) -> String:
+func _get_next_letter(name_key : String) -> String:
 	var possible_next_letters : Dictionary = chain[name_key]
 
 	# Separate the possible next letters from their weights, into their own arrays.
