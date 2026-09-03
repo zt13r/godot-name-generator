@@ -199,8 +199,8 @@ func _ready() -> void:
 ## Returns a String of first name and last name.
 ## Simply call MarkovChain.generate_name() for a full name.
 func generate_name() -> String:
-	var first_name : String = _new_name().capitalize()
-	var last_name : String = _new_name().capitalize()
+	var first_name : String = _get_new_name().capitalize()
+	var last_name : String = _get_new_name().capitalize()
 
 	return first_name + " " + last_name
 
@@ -210,36 +210,46 @@ func _build_markov_chain() -> void:
 	for n in names:
 		var current_name : String = ""
 
-		# Adds START_TOKEN based on [member ORDER].
+		# Adds START_TOKEN based on ORDER.
 		# EX: ORDER == 3 and START_TOKEN == ^ ---> ^^^name
 		for i in range(ORDER):
 			current_name += START_TOKEN
 		current_name += n.to_lower()
 
-		# Loops through every letter combination / "key" in the name based [member ORDER].
-		for i in range(current_name.length() - ORDER):
+		# Loops through every letter combination / "key" (name_key) in the name based on ORDER.
+		for i in range(n.length() + 1):
 			var name_key : String = ""
 
-			# Gets the current key based on [member ORDER].
+			# Gets the current key based on ORDER.
 			# EX: ORDER == 3 ---> key = "nam"e ; ORDER == 2 ---> key = "na"me
 			for j in range(ORDER):
 				name_key += current_name[i + j]
 
 			# Next letter after the key.
 			# EX: key == "nam"e ---> next_letter = nam"e"
-			var next_letter : String = current_name[i + ORDER]
+			if i < n.length():
 
-			# Add letter combination to the Markov chain.
+				# If the index is within bounds,
+				# use the next letter after the key.
+				next_letter = current_name[i + ORDER]
+
+			else:
+
+				# Use NULL_TOKEN if index is outside bounds.
+				# EX: name""
+				next_letter = NULL_TOKEN
+
+			# Add letter combination to the Markov chain if not already.
 			if name_key not in chain:
 				chain[name_key] = {}
 
-			# Add possible next letter to the current key with initial weight [member WEIGHT_INCREMENT].
+			# Add possible next letter to the current key with initial weight WEIGHT_INCREMENT.
 			# EX: Chain has letter "a", and "a" can be followed by "b"
 			#     "b" is added to "a"'s possible next letter list
 			if next_letter not in chain[name_key]:
 				chain[name_key][next_letter] = WEIGHT_INCREMENT
 
-			# Add current weight of current key's next letter with [member WEIGHT_INCREMENT].
+			# Add current weight of current key's next letter with WEIGHT_INCREMENT.
 			# EX: Chain has letter "c", and "c" can be followed by "d"
 			#     "d" is already in "c"'s possible next letter list,
 			#     so simply increase its weight value
@@ -247,11 +257,11 @@ func _build_markov_chain() -> void:
 				chain[name_key][next_letter] = chain[name_key][next_letter] + WEIGHT_INCREMENT
 
 
-func _new_name() -> String:
+func _get_new_name() -> String:
 	var character_count : int = 0
 	var generated_name : String = ""
 
-	# Adds START_TOKEN based on [member ORDER].
+	# Adds START_TOKEN based on ORDER.
 	# EX: ORDER == 3 and START_TOKEN == ^ ---> name_key = ^^^
 	var name_key : String = ""
 	for i in range(ORDER):
@@ -270,18 +280,33 @@ func _new_name() -> String:
 		if next_letter == NULL_TOKEN:
 
 			# Exit loop if character count satisfied MIN_CHARACTER_LENGTH.
-			if character_count > MIN_CHARACTER_LENGTH:
+			if character_count >= MIN_CHARACTER_LENGTH:
 				break
 
 			# Keep pulling new letters until it's not NULL_TOKEN.
 			else:
+
+				# Just a tiny little sentinel to break out of an infinite loop.
+				var attempts : int = 0
+
 				while next_letter == NULL_TOKEN:
 					next_letter = _get_next_letter(name_key)
+
+					if next_letter != NULL_TOKEN:
+						break
+
+					attempts += 1
+					if attempts > 100:
+
+						# I never really encountered this in the latest testing
+						# but it wouldn't hurt to have it here. Probably. Who knows?
+						assert(false, "NEXT_LETTER attempts exceeded 100.")
 
 		# Add next_letter to name.
 		generated_name += next_letter
 
-		# Update name_key: remove first character and add next_letter.
+		# Update name_key: remove first character and add next_letter. 
+		# The GDScript equivalent of Python's `String[1:]`.
 		# EX: name_key == "nam" and next_letter == "e"
 		#     name_key = "am" + "e" = "ame"
 		name_key = name_key.erase(0, 1) + next_letter
