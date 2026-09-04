@@ -225,6 +225,8 @@ func _build_markov_chain() -> void:
 			for j in range(ORDER):
 				name_key += current_name[i + j]
 
+			var next_letter : String = ""
+
 			# Next letter after the key.
 			# EX: key == "nam"e ---> next_letter = nam"e"
 			if i < n.length():
